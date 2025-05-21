@@ -1,36 +1,125 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-## Getting Started
+# 📚 AskIT
 
-First, run the development server:
+**AskIT PDF** is an AI-powered document Q\&A system that allows users to upload PDF documents and interact with them in natural language. It uses Google's Gemini models, LangChain, and Qdrant to provide highly contextual answers, backed by relevant document sources.
+
+---
+## Demo
+
+https://github.com/user-attachments/assets/f169adb5-d124-4112-a97c-53d6a29dbea2
+
+
+## 💪 Features
+
+* **Natural Language Q\&A**: Chat with your PDF using simple, everyday language.
+* **Retrieval-Augmented Generation (RAG)**: Ensures relevant answers by combining vector similarity search with LLM responses.
+* **Source Citations**: Highlights which part of the PDF was used for each response.
+* **Session-based Conversations**: Each chat is tied to a unique session, ensuring scoped responses.
+* **Job Queue with Status Polling**: Processes large PDFs asynchronously and tracks progress.
+* **Multi-page Support**: Upload and query documents with many pages.
+* **Clean UI/UX**: Built with Next.js and Tailwind for modern frontend experience.
+
+---
+
+## 🤖 Tech Stack
+
+### Backend
+
+* **Node.js + Express**: REST API server
+* **BullMQ + Redis**: Job queue to manage background PDF processing
+* **LangChain**: Manages document loading, text splitting, and embeddings
+* **Qdrant**: Vector database for similarity search
+* **Gemini Flash 2.0**: Google LLM for question answering
+
+### Frontend
+
+* **Next.js (React)**: SPA for document upload and chatting
+* **Tailwind CSS**: For styling
+* **Axios**: For API communication
+
+---
+
+## 📂 Folder Structure
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+/backend
+  |- index.js              # Express server
+  |- gemini.js             # Embedding + chat with Gemini
+  |- queue.js              # BullMQ job config
+  |- worker.js             # PDF processing jobs
+  |- utils/
+      |- cleanup.js        # Auto-deletes uploaded PDFs after processing
+
+/frontend
+  |- app/
+      |- upload.tsx        # Upload page
+      |- chat/[sessionId]  # Session-based chat interface
+  |- components/
+      |- Message.tsx       # Renders user/assistant messages
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🚜 How it Works
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. **User Uploads PDF**:
 
-## Learn More
+   * File is sent to backend and enqueued in BullMQ.
 
-To learn more about Next.js, take a look at the following resources:
+2. **Background Processing**:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+   * PDF is loaded, split into overlapping chunks.
+   * Gemini generates embeddings which are stored in Qdrant.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+3. **Job Status Polling**:
 
-## Deploy on Vercel
+   * Frontend polls `/status/:sessionId` until processing is done.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+4. **Ask Questions**:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+   * Frontend sends questions to `/ask/:sessionId`.
+   * Most relevant chunks are retrieved from Qdrant.
+   * Gemini generates a final response using retrieved context.
+
+5. **Cleanup**:
+
+   * Processed PDF files are removed automatically to save space.
+
+---
+
+## 🚀 Getting Started
+
+### 1. Clone the repo
+
+```bash
+git clone https://github.com/your-username/Askit.git
+```
+
+### 2. Install Dependencies
+
+```bash
+cd backend && npm install
+cd ../frontend && npm install
+```
+
+### 3. Start Redis (Docker recommended)
+
+```bash
+docker run -p 6379:6379 redis
+```
+
+### 4. Start Backend
+
+```bash
+cd backend
+node index.js
+```
+
+### 5. Start Frontend
+
+```bash
+cd frontend
+npm run dev
+```
+
+---
